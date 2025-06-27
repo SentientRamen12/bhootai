@@ -45,19 +45,7 @@ touch .env
 
 2. Add the following environment variables to your `.env` file:
 ```env
-# Game Configuration
-GAME_NAME=bhootai
-DEBUG=false
-
-# Database Configuration (if using a database)
-# DATABASE_URL=sqlite:///game.db
-
-# API Keys (if using external services)
-# OPENAI_API_KEY=your_openai_api_key_here
-
-# Game Settings
-# MAX_PLAYERS=10
-# SAVE_GAME_PATH=./saves/
+GOOGLE_API=your-api-key-here
 ```
 
 **Note:** Replace the placeholder values with your actual configuration. Variables starting with `#` are commented out and optional.
