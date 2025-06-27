@@ -15,13 +15,22 @@ class LLM:
         
         Args:
             api_key (str, optional): Google API key. If not provided, 
-                will look for GOOGLE_API_KEY environment variable.
+                will look for GOOGLE_API_KEY, GOOGLE_API, or GEMINI_API_KEY environment variables.
         """
-        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        # Try multiple possible environment variable names
+        if api_key:
+            self.api_key = api_key
+        else:
+            self.api_key = (
+                os.getenv("GOOGLE_API_KEY") or 
+                os.getenv("GOOGLE_API") or 
+                os.getenv("GEMINI_API_KEY")
+            )
+        
         if not self.api_key:
             raise ValueError(
-                "Google API key is required. Set GOOGLE_API_KEY environment "
-                "variable or pass api_key parameter."
+                "Google API key is required. Set GOOGLE_API_KEY, GOOGLE_API, or GEMINI_API_KEY "
+                "environment variable or pass api_key parameter."
             )
         
         # Configure the API
