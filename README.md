@@ -19,8 +19,18 @@ pip install -r requirements.txt
 ### 2. Set API Key
 Create `.env` file:
 ```bash
-LLM_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
+# Choose your LLM provider
+LLM_PROVIDER=openai  # or anthropic, gemini
+
+# API Keys (only need one for your chosen provider)
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+GEMINI_API_KEY=your_gemini_key_here
+
+# Optional: Customize models
+OPENAI_MODEL=gpt-4
+ANTHROPIC_MODEL=claude-3-sonnet-20240229
+GEMINI_MODEL=gemini-pro
 ```
 
 ### 3. Run
