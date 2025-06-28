@@ -1,158 +1,164 @@
-# bhootai
+# 🌙 BhootAI - Interactive Horror Text RPG
 
-A text-based adventure game built with Python featuring an intelligent world system with vector search and LLM integration.
+An AI-powered text-based horror RPG where players navigate a cursed realm with an intelligent Dungeon Master that dynamically generates plot and responds to player actions.
 
-## Features
+## 🎮 Features
 
-- **Intelligent World System**: The World class manages game state with message history and vector search
-- **Vector Database Integration**: Uses ChromaDB for semantic search of world context
-- **LLM Integration**: Powered by Google's Gemini 2.5 Pro for dynamic responses
-- **Message Management**: Maintains a sliding window of recent interactions with automatic summarization
-- **Persistent Storage**: SQLite database for conversations and interactions
+- **Dynamic Storytelling**: AI Dungeon Master generates plot points based on player actions
+- **Episodic Memory**: Intelligent context retrieval from conversation history
+- **Horror Atmosphere**: Immersive horror-themed narrative with psychological elements
+- **Fresh Sessions**: Each session starts with a clean slate
+- **Multi-LLM Support**: Works with OpenAI, Anthropic, and Gemini
 
-## Architecture
+## 🏗️ Architecture
 
-### World Class
-The core `World` class implements the following workflow:
-
-1. **Message Processing**: Takes user input and processes it through the world system
-2. **Context Retrieval**: Gets the last 10 interactions from the database
-3. **Summary Generation**: Creates a short summary for vector search using LLM
-4. **Vector Search**: Searches the vector database for relevant world context (top 5 results)
-5. **Response Generation**: Combines context with user message and generates response using LLM
-6. **Data Storage**: Saves interactions to database and maintains message history
-7. **Memory Management**: Automatically summarizes old messages when stack is full
-
-### Key Components
-
-- **Message History**: Running list of 10 most recent messages
-- **Message Stack**: Temporary storage for popped messages (max 10)
-- **Automatic Summarization**: When stack is full, messages are summarized and added to world context
-- **Vector Search**: Semantic search through world context using ChromaDB
-- **LLM Integration**: Dual LLM usage for summarization and response generation
-
-## Setup
-
-### Prerequisites
-- Python 3.8 or higher
-- pip (Python package installer)
-- Google API key for Gemini
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/SentientRamen12/bhootai.git
-cd bhootai
+```
+bhootai/
+├── src/
+│   ├── core/           # Core system components
+│   ├── agents/         # AI agents (Dungeon Master)
+│   ├── world/          # World state management
+│   ├── data/           # Database layer (SQLite + ChromaDB)
+│   ├── tools/          # Extensible tools system
+│   └── utils/          # Shared utilities (LLM client)
+├── data/               # Database files
+├── config/             # Configuration
+├── prompts/            # System prompts
+└── tests/              # Test suite
 ```
 
-2. Create a virtual environment:
-```bash
-python -m venv .venv
-```
+## 🚀 Quick Start
 
-3. Activate the virtual environment:
-   - On Windows:
-   ```bash
-   .venv\Scripts\activate
-   ```
-   - On macOS/Linux:
-   ```bash
-   source .venv/bin/activate
-   ```
-
-4. Install dependencies:
+### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Environment Configuration
-
-1. Create a `.env` file in the root directory:
+### 2. Set Environment Variables
+Create a `.env` file:
 ```bash
-touch .env
+# Choose your LLM provider
+LLM_PROVIDER=openai  # or anthropic, gemini
+
+# API Keys (only need the one for your chosen provider)
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
+GEMINI_API_KEY=your_gemini_key_here
+
+# Optional: Customize models
+OPENAI_MODEL=gpt-4
+ANTHROPIC_MODEL=claude-3-sonnet-20240229
+GEMINI_MODEL=gemini-pro
 ```
 
-2. Add the following environment variables to your `.env` file:
-```env
-GOOGLE_API_KEY=your-google-api-key-here
-```
-
-**Note:** The system will also accept `GOOGLE_API` or `GEMINI_API_KEY` as alternative environment variable names. Replace the placeholder values with your actual configuration. Variables starting with `#` are commented out and optional.
-
-### Running the Game
-
-Start the game by running:
+### 3. Run the Game
 ```bash
 python main.py
 ```
 
-### Testing the World System
+## 🎯 How It Works
 
-Run the test script to see the World class in action:
+### Core Components
+
+1. **World Manager**: 
+   - Manages world state and episodic memory
+   - Breaks initial context into searchable chunks
+   - Provides context to the Dungeon Master
+
+2. **Dungeon Master**:
+   - Generates dynamic plot points
+   - Responds to player actions with atmospheric descriptions
+   - Maintains conversation history and plot coherence
+
+3. **Memory System**:
+   - Stores episodic memories after 20 interactions
+   - Provides semantic search for relevant context
+   - Enables coherent long-term storytelling
+
+### Game Flow
+
+1. **Initialization**: World loads context, DM sets up initial plot
+2. **Player Input**: Player describes actions or asks questions
+3. **Context Retrieval**: DM gets relevant world context and memory
+4. **Response Generation**: DM creates atmospheric, plot-advancing response
+5. **Plot Extension**: New plot points generated based on player action
+6. **Memory Storage**: Interaction stored for future context
+7. **Session Cleanup**: All data cleared for fresh start
+
+## 🔧 Configuration
+
+### Custom Prompts
+Modify prompts in the `prompts/` folder:
+- `prompts/system/dm_system.txt`: Dungeon Master personality
+- `prompts/agents/plot_generator.txt`: Plot generation instructions
+
+### World Context
+Replace `initial_world_context.txt` with your own horror setting description.
+
+### Database Settings
+Database paths configured in `config/configs.py`:
+- SQLite: `data/sqlite/game.db`
+- ChromaDB: `data/chromadb/`
+
+## 🎭 Game Commands
+
+- **Normal Input**: Describe your actions, ask questions, explore
+- **quit/exit/q**: End the current session
+- **Ctrl+C**: Emergency exit
+
+## 🧪 Development
+
+### Project Structure
+```
+src/
+├── agents/dungeon_master/  # DM implementation
+├── world/                  # World state management
+├── data/                   # Database operations
+├── utils/                  # LLM client, utilities
+└── core/                   # Core system (future)
+```
+
+### Adding Features
+- **New Agents**: Extend base agent classes in `src/agents/`
+- **Tools**: Add to `src/tools/` for DM capabilities
+- **Memory Types**: Extend episodic memory system
+- **World Elements**: Add new entity types or location properties
+
+### Testing
 ```bash
-python test_world.py
+# Run tests
+python -m pytest tests/
+
+# Run specific test categories
+python -m pytest tests/unit/
+python -m pytest tests/integration/
 ```
 
-## Usage Examples
+## 🔮 Future Enhancements
 
-### Basic World Usage
+- **Multiple Agents**: Additional AI agents for NPCs
+- **Tool System**: DM can use tools for complex actions
+- **Persistent Worlds**: Option to save/load game states
+- **Multiplayer**: Multiple players in shared world
+- **Voice Interface**: Speech-to-text integration
+- **Visual Elements**: ASCII art and formatting
 
-```python
-from world import World
-from database_setup import initialize_databases
+## 📝 License
 
-# Initialize databases
-db_manager = initialize_databases()
+This project is open source. Feel free to modify and extend for your own horror RPG adventures!
 
-# Create world instance
-world = World(db_manager=db_manager)
+## 🐛 Troubleshooting
 
-# Process user message
-response = world.process_user_message("I want to explore the forest")
-print(response)
+### Common Issues
 
-# Get message history
-history = world.get_message_history()
-print(f"Message history: {len(history)} messages")
+1. **API Key Errors**: Ensure your chosen provider's API key is set
+2. **Import Errors**: Make sure all dependencies are installed
+3. **Database Errors**: Check file permissions in `data/` directory
+4. **Memory Issues**: ChromaDB requires sufficient disk space
 
-# Get stack status
-status = world.get_stack_status()
-print(f"Stack size: {status['stack_size']}")
-```
+### Debug Mode
+Add debug logging by modifying the main game loop or using Python's logging module.
 
-### Custom World Prompt
+---
 
-You can customize the world behavior by editing `world_prompt.txt`:
-
-```txt
-You are the narrator of a cyberpunk world...
-```
-
-## File Structure
-
-```
-bhootai/
-├── world.py              # Main World class implementation
-├── llm.py               # LLM integration with Gemini
-├── models.py            # Database models (Conversation, Interaction)
-├── database_setup.py    # Database initialization and management
-├── main.py              # Main game entry point
-├── test_world.py        # Test script for World class
-├── world_prompt.txt     # System prompt for the world
-├── initial_world_context.txt  # Initial world context for vector DB
-├── requirements.txt     # Python dependencies
-└── README.md           # This file
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test your changes
-5. Submit a pull request
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
+**Enter the nightmare realm at your own risk...** 🌙 
