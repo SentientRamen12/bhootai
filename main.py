@@ -1,104 +1,154 @@
-'''
-Starts the whole game and manages the player interactions
-'''
+#!/usr/bin/env python3
+"""
+BhootAI - Interactive Horror Text RPG
+Main game loop that manages player-DM interactions
+"""
 
-from dotenv import load_dotenv
-import os
 import sys
-from database_setup import initialize_databases
-from world import World
+import os
+from pathlib import Path
 
-load_dotenv()
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent / "src"))
 
-def check_api_key():
-    """Check if Google API key is available"""
-    api_key = (
-        os.getenv("GOOGLE_API_KEY") or 
-        os.getenv("GOOGLE_API") or 
-        os.getenv("GEMINI_API_KEY")
-    )
-    return api_key
+from src.world.world import World
+from src.agents.dungeon_master.dm import DungeonMaster
+from src.data.database import get_sqlite_connection, get_chromadb_client
+from src.data.crud import get_current_game_state
+from src.utils.terminal_ui import TerminalUI
 
-def setup_instructions():
-    """Display setup instructions"""
-    print("\n" + "="*60)
-    print("SETUP REQUIRED")
-    print("="*60)
-    print("To run this game, you need a Google API key for Gemini.")
-    print("\n1. Get a Google API key from:")
-    print("   https://makersuite.google.com/app/apikey")
-    print("\n2. Add it to your .env file:")
-    print("   GOOGLE_API_KEY=your-api-key-here")
-    print("\n3. Or set it as an environment variable:")
-    print("   export GOOGLE_API_KEY=your-api-key-here")
-    print("\nAlternative environment variable names:")
-    print("   GOOGLE_API or GEMINI_API_KEY")
-    print("="*60)
+def clear_databases():
+    """Clear all data from databases for fresh session"""
+    print("Clearing databases for fresh session...")
+    
+    # Clear SQLite database
+    conn = get_sqlite_connection()
+    cursor = conn.cursor()
+    
+    # Get all table names
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    tables = cursor.fetchall()
+    
+    # Clear all tables
+    for table in tables:
+        table_name = table[0]
+        if table_name != 'sqlite_sequence':  # Skip SQLite internal table
+            cursor.execute(f"DELETE FROM {table_name}")
+    
+    conn.commit()
+    conn.close()
+    
+    # Clear ChromaDB collection
+    try:
+        client = get_chromadb_client()
+        collection = client.get_collection("episodic_memory")
+        
+        # Get all documents to delete them by ID
+        results = collection.get()
+        if results and results.get('ids'):
+            collection.delete(ids=results['ids'])
+            
+    except Exception as e:
+        pass  # Silently handle ChromaDB errors
+
+def log_to_file(message: str):
+    """Log messages to logs.txt file"""
+    try:
+        with open("logs.txt", "a") as f:
+            f.write(f"{message}\n")
+    except:
+        pass  # Silently fail if logging fails
 
 def main():
-    """Main game initialization and entry point"""
-    print("Initializing BhootAI game...")
-    
-    # Check for API key
-    if not check_api_key():
-        setup_instructions()
-        sys.exit(1)
+    """Main game loop"""
+    ui = TerminalUI()
     
     try:
-        # Initialize databases
-        print("Setting up databases...")
-        db_manager = initialize_databases()
+        # Show loading screen
+        ui.show_loading_screen()
         
-        # Create world instance
-        print("Creating world...")
-        world = World(db_manager=db_manager)
+        # Clear databases for fresh session
+        clear_databases()
         
-        print("Game initialized successfully!")
-        print("Welcome to the horror realm!")
-        print("Type 'quit' to exit the game.")
-        print("-" * 50)
+        # Show title screen
+        ui.show_title_screen()
         
-        # Generate and display initial welcome message from the world
-        print("\nGenerating your nightmare...")
-        try:
-            initial_message = world.get_initial_welcome_message()
-            print(f"\nWorld: {initial_message}")
-        except Exception as e:
-            print(f"\nError generating initial message: {e}")
-            print("\nWorld: The darkness welcomes you to this cursed realm. Your journey into madness begins now.")
+        # Get player name
+        player_name = ui.get_player_name()
+        
+        # Initialize world and DM
+        print("Initializing the cursed realm...")
+        world = World()
+        dm = DungeonMaster(world)
+        
+        # Generate chapter description
+        chapter_description = dm.generate_opening_scene()
+        
+        # Show chapter header
+        ui.show_chapter_header(1, "THE AWAKENING", chapter_description)
+        
+        # Wait for player to say "start"
+        while True:
+            player_input = input(f"{player_name}: ").strip().lower()
+            if player_input == "start":
+                break
+            elif player_input in ['quit', 'exit', 'q']:
+                return
+            else:
+                print("Say 'start' to begin your nightmare...")
+        
+        # Generate first DM interaction automatically
+        first_interaction = dm.respond_to_player("begin")
+        ui.show_dm_response(first_interaction)
         
         # Game loop
+        interaction_count = 1  # Start at 1 since we already had the first interaction
         while True:
             try:
-                user_input = input("\nYou: ").strip()
+                # Get player input
+                player_input = input(f"{player_name}: ").strip()
                 
-                if user_input.lower() in ['quit', 'exit', 'q']:
-                    print("Farewell, brave explorer. The world will remember your journey.")
+                # Check for exit commands
+                if player_input.lower() in ['quit', 'exit', 'q']:
                     break
                 
-                if not user_input:
+                if not player_input:
+                    print("Please say something...")
                     continue
                 
-                # Process user message through the world
-                response = world.process_user_message(user_input)
-                print(f"\nWorld: {response}")
+                # Get DM response
+                response = dm.respond_to_player(player_input)
+                ui.show_dm_response(response)
+                
+                interaction_count += 1
+                
+                # Show progress every 10 interactions
+                if interaction_count % 10 == 0:
+                    plot_status = dm.get_current_plot_status()
+                    ui.show_progress(interaction_count, plot_status)
                 
             except KeyboardInterrupt:
-                print("\n\nFarewell, brave explorer. The world will remember your journey.")
+                print(f"\n\n{player_name}, you are torn from the nightmare realm...")
                 break
             except Exception as e:
-                print(f"\nAn error occurred: {e}")
-                print("The world seems to be in a state of flux. Try again.")
-                
+                log_to_file(f"Error in game loop: {e}")
+                ui.show_error_message(str(e))
+                continue
+        
+        # Show exit screen
+        plot_status = dm.get_current_plot_status()
+        ui.show_exit_screen(player_name, interaction_count, plot_status)
+        
     except Exception as e:
-        print(f"\nFailed to initialize game: {e}")
-        print("Please check your setup and try again.")
+        log_to_file(f"Fatal error: {e}")
+        ui.show_error_message(str(e))
         sys.exit(1)
+    
+    finally:
+        # Clean up databases
+        print("Cleaning up session data...")
+        clear_databases()
+        print("Session cleanup complete.")
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
