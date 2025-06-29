@@ -31,14 +31,14 @@ class LLMClient:
                     return
                 else:
                     raise ValueError("No API keys found for any provider")
-            openai.api_key = OPENAI_API_KEY
+            self.client = openai.OpenAI(api_key=OPENAI_API_KEY)
         elif self.provider == "anthropic":
             if not ANTHROPIC_API_KEY:
                 # Try to find any available provider
                 if OPENAI_API_KEY:
                     self.provider = "openai"
                     self.model = LLM_MODELS.get("openai")
-                    openai.api_key = OPENAI_API_KEY
+                    self.client = openai.OpenAI(api_key=OPENAI_API_KEY)
                     print(f"Anthropic key not found, switching to OpenAI")
                     return
                 elif GEMINI_API_KEY:
@@ -56,7 +56,7 @@ class LLMClient:
                 if OPENAI_API_KEY:
                     self.provider = "openai"
                     self.model = LLM_MODELS.get("openai")
-                    openai.api_key = OPENAI_API_KEY
+                    self.client = openai.OpenAI(api_key=OPENAI_API_KEY)
                     print(f"Gemini key not found, switching to OpenAI")
                     return
                 elif ANTHROPIC_API_KEY:
@@ -99,7 +99,7 @@ class LLMClient:
         if prompt:
             all_messages.append({"role": "user", "content": prompt})
         
-        response = openai.ChatCompletion.create(
+        response = self.client.chat.completions.create(
             model=self.model,
             messages=all_messages,
             temperature=temperature,

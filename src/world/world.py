@@ -201,8 +201,13 @@ class World:
         if not current_state:
             return
         
-        state_id = current_state[0]
-        update_game_state(state_id, **kwargs)
+        # Extract current values
+        plot_progress = kwargs.get('plot_progress', current_state[1])
+        session_data = kwargs.get('session_data', json.loads(current_state[2]) if current_state[2] else {})
+        world_state = kwargs.get('world_state', json.loads(current_state[3]) if current_state[3] else {})
+        
+        # Update the game state
+        update_game_state(plot_progress, session_data, world_state)
     
     def create_location(self, name: str, description: str, properties: Optional[Dict] = None) -> int:
         """Create a new location"""
