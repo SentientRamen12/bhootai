@@ -8,13 +8,16 @@ import sys
 import os
 from pathlib import Path
 
+# Suppress HuggingFace tokenizer warnings
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent / "src"))
 
 from src.world.world import World
 from src.agents.dungeon_master.dm import DungeonMaster
-from src.data.database import get_sqlite_connection, get_chromadb_client
-from src.data.crud import get_current_game_state
+from src.db.database import get_sqlite_connection, get_chromadb_client
+from src.db.crud import get_current_game_state
 from src.utils.terminal_ui import TerminalUI
 
 def clear_databases():

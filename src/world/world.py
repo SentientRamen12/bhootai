@@ -3,9 +3,9 @@ import re
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 
-from src.data.database import get_sqlite_connection, get_chromadb_client
-from src.data.schema import create_sqlite_schema, setup_chromadb
-from src.data.crud import (
+from src.db.database import get_sqlite_connection, get_chromadb_client
+from src.db.schema import create_sqlite_schema, setup_chromadb
+from src.db.crud import (
     create_location, get_location, get_all_locations,
     create_entity, get_entities_by_location, get_entities_by_type,
     create_game_state, get_current_game_state, update_game_state,
